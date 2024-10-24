@@ -1,1 +1,69 @@
+pipeline {
+  agent none
+  stages {
+    stage('Back-end - Setup Java Application') {
+      agent {
+        docker { image 'maven:3.8.1-adoptopenjdk-11' }
+      }
+      steps {
+        script {
+          // Create a simple "Hello World" Java program
+          sh '''
+          mkdir -p src/main/java/com/example
+          cat > src/main/java/com/example/HelloWorld.java <<EOL
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  System.out.println("Hello, World from Jenkins!");
+              }
+          }
+          EOL
+          '''
+
+          // Create a basic Maven pom.xml file
+          sh '''
+          cat > pom.xml <<EOL
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>com.example</groupId>
+              <artifactId>helloworld</artifactId>
+              <version>1.0-SNAPSHOT</version>
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+              </properties>
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.8.1</version>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          EOL
+          '''
+        }
+
+        // Compile the Java application
+        sh 'mvn clean compile'
+
+        // Run the compiled HelloWorld class
+        sh 'java -cp target/classes com.example.HelloWorld'
+      }
+    }
+
+    stage('Front-end - Node.js Setup') {
+      agent {
+        docker { image 'node:16-alpine' }
+      }
+      steps {
+        // Node.js setup: Check Node.js version as an example
+        sh 'node --version'
+      }
+    }
+  }
+}
 
